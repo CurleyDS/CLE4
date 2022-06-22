@@ -1,134 +1,43 @@
 // import files
 import * as PIXI from 'pixi.js'
-import pizzaImage from './images/pizza.png'
-import sauceImage from './images/sauce.png'
-import { Pizza } from "./pizza"
-import { Sauce } from "./sauce"
+import playImage1 from './images/playbutton1.png'
+import playImage2 from './images/playbutton2.png'
 
-export class Game {
+export class App {
+    pixiCanvas:any = document.getElementById("pixi-canvas");
+  	pixi:PIXI.Application;
+    loader:PIXI.Loader
+    
+    constructor() {
+        // create a pixi canvas
+		this.pixi = new PIXI.Application({width: 700, height: window.innerHeight, backgroundAlpha: 0});
+		this.pixiCanvas.appendChild(this.pixi.view);
 
-	pixiCanvas:any = document.getElementById("pixi-canvas");
-  pixi:PIXI.Application;
-	resetButton:any = document.getElementById('reset');
-	pizza:Pizza;
-	sauce:Sauce[] = [];
-	drawPosition:any = null;
-	drawingStarted:boolean = false;
-	loader:PIXI.Loader;
-	
-	constructor() {
-		// create a pixi canvas
-		this.pixi = new PIXI.Application({ width: 800, height: 450, });
-		pixiCanvas.appendChild(this.pixi.view);
+        this.loader = new PIXI.Loader()
+        this.loader
+            .add("playButton", playImage1)
+            .add("playButtonHover", playImage2)
 
-		// preload all the textures
-		this.loader = new PIXI.Loader();
-		this.loader
-			.add('pizzaTexture', pizzaImage) // laadt de images in de variabelen uit de import
-			.add('sauceTexture', sauceImage); // laadt de images in de variabelen uit de import
-		this.loader.load(() => this.loadCompleted());
-	}
+        this.loader.load(() => this.doneLoading())
+    }
+    
+    doneLoading() {
+        let playButton = new PIXI.Sprite(this.loader.resources["playButton"].texture!)
+        this.pixi.stage.addChild(playButton)
 
-	// after loading is complete
-	loadCompleted() {
-		this.pizza = new Pizza(
-			this.loader.resources["pizzaTexture"].texture!,
-			this.pixi.screen.width,
-			this.pixi.screen.height
-		);
-		this.pixi.stage.addChild(this.pizza);
-		
-		const onDown = (e:any) => {
-			const position = this.pizza.toLocal(e.data.global);
-			position.x += 400; // canvas size is 1024x1024, so we offset the position by the half of its resolution
-			position.y += 225;
+        playButton.width = this.pixi.screen.width / 2
+        playButton.height = playButton.width
+        playButton.position.set((this.pixi.screen.width / 4), (this.pixi.screen.height / 4));
+        playButton.interactive = true
+        playButton.buttonMode = true
+        playButton.on('mouseover', () => { playButton.texture = this.loader.resources["playButtonHover"].texture! })
+        playButton.on('mouseout', () => { playButton.texture = this.loader.resources["playButton"].texture! })
+        playButton.on('pointerdown', this.onClick)
+    }
 
-			if (this.insideBorder(position)) {
-				this.drawPosition = position;
-				this.drawingStarted = true;
-			}
-		}
-
-		const onMove = (e:any) => {
-			if (this.drawingStarted) {
-				const position = this.pizza.toLocal(e.data.global);
-				position.x += 400;
-				position.y += 225;
-
-				if (this.insideBorder(position)) {
-					console.log("inside borders");
-					this.drawPosition = position;
-				} else {
-					console.log("outside borders");
-					this.drawingStarted = false;
-				}
-			}
-		}
-
-		const onUp = (e:any) => {
-			this.drawingStarted = false;
-		}
-
-		this.pizza.on('mousedown', onDown);
-		this.pizza.on('touchstart', onDown);
-		this.pizza.on('mousemove', onMove);
-		this.pizza.on('touchmove', onMove);
-		this.pizza.on('mouseup', onUp);
-		this.pizza.on('touchend', onUp);
-
-		this.pixi.ticker.add((delta) => this.addSauce(delta));
-	}
-  
-	insideBorder(position:any) {
-		if (position != null) {
-			const bounds = this.pizza.hitbox;
-			let center = {
-				x: 400,
-				y: 225
-			};
-	
-			let distance = (center.x - position.x) * (center.x - position.x) + (center.y - position.y) * (center.y - position.y);
-			let radius = bounds.radius * bounds.radius;
-			if (distance < radius) {
-				return true;
-			}
-			return false;
-		}
-	}
-
-	resetPizza() {
-		if (this.resetButton.checked) {
-			return true;
-		}
-		return false;
-	}
-
-	addSauce(delta:number) {
-		if (this.insideBorder(this.drawPosition)) {
-			if (this.drawingStarted) {
-				let sauce = new Sauce(this.loader.resources["sauceTexture"].texture!, this.drawPosition)
-				this.pixi.stage.addChild(sauce);
-				this.sauce.push(sauce);
-			}
-		}
-		
-		if (this.resetPizza()) {
-			this.pizza.y -= 5 * delta
-			if (this.pizza.y < -600) {
-				this.pixi.stage.removeChild(this.pizza)
-				if (this.pixi.stage.children.length == 0){
-					this.pizza = new Pizza(
-						this.loader.resources["pizzaTexture"].texture!,
-						this.pixi.screen.width,
-						this.pixi.screen.height
-					);
-					this.pixi.stage.addChild(this.pizza);
-					this.resetButton.checked = false;
-				}
-			}
-		}
-	}
-
+    onClick() {
+        window.location.href = "game.html"
+    }
 }
 
-new Game();
+new App();
