@@ -10,6 +10,7 @@ export class Game {
   	pixi:PIXI.Application;
 	resetButton:any = document.getElementById('reset');
 	ingredientButtons:HTMLCollectionOf<Element>;
+	selectedIngredient:PIXI.Text;
 	oldIngredient:number;
 	currentIngredient:number;
 	pizza:Pizza;
@@ -22,6 +23,7 @@ export class Game {
 		this.pixiCanvas.appendChild(this.pixi.view);
 
 		this.ingredientButtons = document.getElementsByClassName('ingredient');
+		this.currentIngredient = -1;
 
 		// preload all the textures
 		this.loader = new PIXI.Loader();
@@ -34,6 +36,9 @@ export class Game {
 
 	// after loading is complete
 	loadCompleted() {
+		this.selectedIngredient = new PIXI.Text(`X`, {fontFamily : 'Arial', fontSize: 24, fill : 0xff1010, align : 'center'});
+		this.pixi.stage.addChild(this.selectedIngredient);
+
 		this.pizza = new Pizza(
 			this.loader.resources["pizzaTexture"].texture!,
 			this.pixi.screen.width,
@@ -51,14 +56,15 @@ export class Game {
 		if (this.resetButton.checked) {
 			this.resetButton.disabled = true;
 			return true;
+		} else {
+			return false;
 		}
-		return false;
 	}
 
 	toggleIngredient() {
 		for (var x = 0; x < this.ingredientButtons.length; x++) {
-			if (this.oldIngredient != this.currentIngredient) {
-				if (typeof this.oldIngredient !== 'undefined' && this.ingredientButtons[this.oldIngredient].checked) {
+			if (typeof this.oldIngredient !== 'undefined' && this.oldIngredient != this.currentIngredient) {
+				if (this.oldIngredient != -1 && this.ingredientButtons[this.oldIngredient].checked) {
 					this.ingredientButtons[this.oldIngredient].checked = false;
 				}
 				this.oldIngredient = this.currentIngredient;
@@ -71,28 +77,35 @@ export class Game {
 
 	update(delta:number) {
 		this.toggleIngredient();
+
+		if (this.currentIngredient != -1) {
+			this.selectedIngredient.text = this.ingredientButtons[this.currentIngredient].name;
+		} else {
+			this.selectedIngredient.text = `X`;
+		}
+		
 		this.pizza.update(delta, this.currentIngredient);
 		this.sound.play();
 		
 		if (this.resetPizza()) {
-			this.pizza.y -= 5 * delta
+			this.pizza.y -= 5 * delta;
 			if (this.pizza.y < -600) {
-				this.pixi.stage.removeChild(this.pizza)
-				if (this.pixi.stage.children.length == 0){
-					this.pizza = new Pizza(
-						this.loader.resources["pizzaTexture"].texture!,
-						this.pixi.screen.width,
-						this.pixi.screen.height
-					);
-					this.pixi.stage.addChild(this.pizza);
-					
-					for (let x = 0; x < this.ingredientButtons.length; x++) {
-						this.ingredientButtons[x].checked = false;
-					}
-
-					this.resetButton.checked = false;
-					this.resetButton.disabled = false;
+				this.pixi.stage.removeChild(this.pizza);
+				
+				this.pizza = new Pizza(
+					this.loader.resources["pizzaTexture"].texture!,
+					this.pixi.screen.width,
+					this.pixi.screen.height
+				);
+				this.pixi.stage.addChild(this.pizza);
+				
+				for (let x = 0; x < this.ingredientButtons.length; x++) {
+					this.ingredientButtons[x].checked = false;
 				}
+				this.currentIngredient = -1;
+
+				this.resetButton.checked = false;
+				this.resetButton.disabled = false;
 			}
 		}
 	}
