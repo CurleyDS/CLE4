@@ -1,4 +1,4 @@
-[Link naar de game](http://curleyds.github.io/CLE4-2021-2022)
+[Link naar de game.](http://curleyds.github.io/CLE4-2021-2022)
 
 # CLE4
  
